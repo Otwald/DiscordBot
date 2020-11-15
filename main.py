@@ -1,39 +1,45 @@
 import os
-
 import discord
+
+from rest import Rest
+from discord.ext import commands
 from dotenv import load_dotenv
 
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
-GUILD = os.getenv('DISCORD_GUILD')
+GUILD = os.getenv('DISCORD_GUILD_ID')
+WORK_CH_ID = os.getenv('WORK_CH_ID')
 
-client = discord.Client()
+bot = commands.Bot(command_prefix="!")
+rest = Rest()
 
 
-@client.event
+async def getChHistory(channel: discord.TextChannel):
+    message: discord.Message
+    async for message in channel.history(limit=200):
+        if not message.author.bot:
+            print(message)
+            rest.makeRequest()
+
+
+@bot.event
 async def on_ready():
-    guild = discord.utils.get(client.guilds, name=GUILD)
-    print(f'{client.user} has connected to Discord!')
-    print(f'{guild.name}(id: {guild.id})')
+    # print(bot.guilds)
+    guild: discord.Guild = discord.utils.get(bot.guilds, id=int(GUILD))
+    await getChHistory(discord.utils.get(guild.channels, id=int(WORK_CH_ID)))
+    # print(guild.channels)
+    print(f'{bot.user.name} has connected to Discord!')
 
 
-@client.event
-async def on_member_join(member):
-    await member.create_dm()
-    await member.dm_channel.send(f'''Hallo {member.name}, Willkommen bei den
-                                 Papierkriegern!''')
-
-
-@client.event
-async def on_message(message):
-    if message.author == client.user:
+@bot.event
+async def on_message(msg):
+    print(msg.channel.id)
+    if msg.author == bot.user:
         return
 
-    print(message.channel)
-    response = "Just a Test"
+    print(type(msg.channel.id))
+    if msg.channel.id == 757688430132985967:
+        await msg.channel.send("nerv nicht")
 
-    if message.content == "!test":
-        await message.channel.send(response)
-
-client.run(TOKEN)
+bot.run(TOKEN)
