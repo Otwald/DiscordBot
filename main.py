@@ -14,6 +14,7 @@ TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD_ID')
 WORK_CH_ID = os.getenv('WORK_CH_ID')
 ROLE_CH_ID = os.getenv('ROLE_CH_ID')
+react_msg: int = 0
 
 bot = commands.Bot(command_prefix="!")
 rest = Rest()
@@ -25,6 +26,7 @@ async def on_ready():
     await getChHistory(discord.utils.get(guild.channels, id=int(WORK_CH_ID)))
     await checkRoleCh(discord.utils.get(guild.channels, id=int(ROLE_CH_ID)))
     log.info(f'{bot.user.name} has connected to Discord!')
+    print("Ready")
 
 
 @bot.event
@@ -36,9 +38,12 @@ async def on_message(msg):
 
 
 @bot.event
-async def on_reaction_add(reaction: discord.reaction, user: discord.User):
-    print(reaction)
-    print(discord.User)
+async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
+    print(payload.message_id)
+    print(react_msg)
+    if payload.message_id != react_msg:
+        return
+    print(payload)
 
 
 async def getChHistory(channel: discord.TextChannel) -> None:
@@ -55,24 +60,25 @@ async def checkRoleCh(channel: discord.TextChannel) -> None:
     checks or posts message for the role menu channel
     """
     message: discord.Message
-    check_msg: str = """
-Rollen Auswahl
+    check_msg: str = """Rollen Auswahl
 Reagiere mit diesem Emote um dir selbst die Rolle zu geben
 
 :pen_ballpoint:  : Spielleiter
 
 :scroll:  : Rollenspieler"""
+
     check: bool = False
     messages = await channel.history(limit=200).flatten()
-    print(check_msg)
     if len(messages) == 0:
         await channel.send(check_msg)
         return
     for message in messages:
         if message.author != bot.user:
             continue
-        if message.content != check_msg:
+        if hash(message.content) != hash(check_msg):
             check = True
+        else:
+            react_msg = message.id
     if check:
         await channel.send(check_msg)
         log.info("Added Role Channels Default Msg")
