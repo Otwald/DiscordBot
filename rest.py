@@ -1,10 +1,10 @@
-import requests
+import os
 import json
+import requests
+from dotenv import load_dotenv
 
 
 class Rest:
-    url = "http://localhost:3000/hello"
-
     attribute: dict = {"titel": "round_name", "setting": "setting",
                        "regelwerk": "ruleset", "zeitblock": "round_tb", "spielleiter": "round_gm",
                        "gewünschte spielerzahl": "round_max_pl", "vorbereitete charaktere": "own_char",
@@ -14,10 +14,15 @@ class Rest:
         'auth': '123'  # TODO read from env file
     }
 
+    def __init__(self):
+        load_dotenv()
+        self.URL = os.getenv('WEB_API')
+
     def makeRequest(self, msg: str) -> bool:
+        print(self.URL)
         response = requests.request(
             "POST",
-            self.url,
+            self.URL,
             headers=self.headers,
             data=json.dumps(self.preparePayload(msg))
         )
@@ -28,7 +33,8 @@ class Rest:
             return False
 
     def preparePayload(self, msg: str) -> dict:
-        """builds from a string a dictionary to be consumed as a payload
+        """
+        builds from a string a dictionary to be consumed as a payload
         """
         msg_dict: dict = {}
         split_msg = msg.split("\n")

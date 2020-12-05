@@ -18,13 +18,7 @@ rest = Rest()
 async def getChHistory(channel: discord.TextChannel):
     message: discord.Message
     async for message in channel.history(limit=200):
-        if message.author.bot:
-            continue
-        if checkMsgReact(message.reactions):
-            if rest.makeRequest(msg=message.content):
-                await message.add_reaction('✅')
-            else:
-                await message.add_reaction('❌')
+        await wrapMsgCheck(message)
 
 
 @bot.event
@@ -38,17 +32,29 @@ async def on_ready():
 
 @bot.event
 async def on_message(msg):
-    print(msg.channel.id)
     if msg.author == bot.user:
         return
+    if msg.channel.id == int(WORK_CH_ID):
+        await wrapMsgCheck(msg)
 
-    print(type(msg.channel.id))
-    if msg.channel.id == 757688430132985967:
-        await msg.channel.send("nerv nicht")
+
+async def wrapMsgCheck(message: discord.Message):
+    """
+    checks if msg is not from a bot, and if msg was already send to website
+    if not send it and adds reaction to the msg
+    """
+    if message.author.bot:
+        return
+    if checkMsgReact(message.reactions):
+        if rest.makeRequest(msg=message.content):
+            await message.add_reaction('✅')
+        else:
+            await message.add_reaction('❌')
 
 
 def checkMsgReact(reacts: list) -> bool:
-    """checks list of reactions on a message to see if one is from the bot
+    """
+    checks list of reactions on a message to see if one is from the bot
     """
     for react in reacts:
         if react.me:
