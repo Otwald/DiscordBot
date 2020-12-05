@@ -1,6 +1,7 @@
 import os
 import json
 import requests
+import logging as log
 from dotenv import load_dotenv
 
 
@@ -11,15 +12,14 @@ class Rest:
                        "beschreibung": "round_desc"}
     headers = {
         'Content-Type': 'application/json',
-        'auth': '123'  # TODO read from env file
     }
 
     def __init__(self):
         load_dotenv()
         self.URL = os.getenv('WEB_API')
+        self.headers["auth"] = os.getenv('API_TOKEN')
 
     def makeRequest(self, msg: str) -> bool:
-        print(self.URL)
         response = requests.request(
             "POST",
             self.URL,
@@ -27,9 +27,10 @@ class Rest:
             data=json.dumps(self.preparePayload(msg))
         )
         if(response.status_code == 200):
+            log.error("created new Entry")
             return True
         else:
-            # TODO add log
+            log.error(response.content)
             return False
 
     def preparePayload(self, msg: str) -> dict:
