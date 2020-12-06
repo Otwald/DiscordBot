@@ -54,10 +54,17 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
         await payload.member.add_roles(ROLE_DICT[role])
 
 
+@bot.event
 async def on_raw_reaction_remove(payload: discord.RawReactionActionEvent):
-    print(payload)
     if payload.message_id != REACT_MSG_ID:
         return
+    for role, emoji in EMOJI.items():
+        if payload.emoji.name != emoji:
+            continue
+        guild: discord.Guild = discord.utils.get(
+            bot.guilds, id=int(payload.guild_id))
+        member = await guild.fetch_member(payload.user_id)
+        await member.remove_roles(ROLE_DICT[role])
 
 
 async def getChHistory(channel: discord.TextChannel) -> None:
