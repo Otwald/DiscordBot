@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 
 load_dotenv()
-log.basicConfig(filename='example.log', level=log.INFO,
+log.basicConfig(filename='main.log', level=log.INFO,
                 format='%(asctime)s - %(levelname)s -  %(message)s')
 TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD_ID')
@@ -31,7 +31,6 @@ async def on_ready():
     for role in guild.roles:
         ROLE_DICT[role.name] = role
     log.info(f'{bot.user.name} has connected to Discord!')
-    print("Ready")
 
 
 @bot.event
@@ -44,27 +43,33 @@ async def on_message(msg):
 
 @bot.event
 async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
-    if payload.message_id != REACT_MSG_ID:
-        return
-    if payload.member.bot:
-        return
-    for role, emoji in EMOJI.items():
-        if (payload.emoji.name != emoji):
-            continue
-        await payload.member.add_roles(ROLE_DICT[role])
+    try:
+        if payload.message_id != REACT_MSG_ID:
+            return
+        if payload.member.bot:
+            return
+        for role, emoji in EMOJI.items():
+            if (payload.emoji.name != emoji):
+                continue
+            await payload.member.add_roles(ROLE_DICT[role])
+    except (RuntimeError) as err:
+        log.error(err)
 
 
 @bot.event
 async def on_raw_reaction_remove(payload: discord.RawReactionActionEvent):
-    if payload.message_id != REACT_MSG_ID:
-        return
-    for role, emoji in EMOJI.items():
-        if payload.emoji.name != emoji:
-            continue
-        guild: discord.Guild = discord.utils.get(
-            bot.guilds, id=int(payload.guild_id))
-        member = await guild.fetch_member(payload.user_id)
-        await member.remove_roles(ROLE_DICT[role])
+    try:
+        if payload.message_id != REACT_MSG_ID:
+            return
+        for role, emoji in EMOJI.items():
+            if payload.emoji.name != emoji:
+                continue
+            guild: discord.Guild = discord.utils.get(
+                bot.guilds, id=int(payload.guild_id))
+            member = await guild.fetch_member(payload.user_id)
+            await member.remove_roles(ROLE_DICT[role])
+    except (RuntimeError) as err:
+        log.error(err)
 
 
 async def getChHistory(channel: discord.TextChannel) -> None:
@@ -80,30 +85,33 @@ async def checkRoleCh(channel: discord.TextChannel) -> None:
     """
     checks or posts message for the role menu channel
     """
-    message: discord.Message
-    global REACT_MSG_ID
-    react: list = ["Spielleiter", "Spieler"]
-    check_msg: str = f"""Rollen Auswahl
+    try:
+        message: discord.Message
+        global REACT_MSG_ID
+        react: list = ["Spielleiter", "Spieler"]
+        check_msg: str = f"""Rollen Auswahl
 Reagiere mit diesem Emote um dir selbst die Rolle zu geben
 
 {EMOJI[react[0]]}  : Spielleiter
 
 {EMOJI[react[1]]}  : Rollenspieler"""
-    check: bool = False
-    messages = await channel.history(limit=200).flatten()
-    for message in messages:
-        if message.author != bot.user:
-            continue
-        if hash(message.content) != hash(check_msg):
-            check = True
-        else:
+        check: bool = False
+        messages = await channel.history(limit=200).flatten()
+        for message in messages:
+            if message.author != bot.user:
+                continue
+            if hash(message.content) != hash(check_msg):
+                check = True
+            else:
+                REACT_MSG_ID = message.id
+        if check or len(messages) == 0:
+            message = await channel.send(check_msg)
             REACT_MSG_ID = message.id
-    if check or len(messages) == 0:
-        message = await channel.send(check_msg)
-        REACT_MSG_ID = message.id
-        for r in EMOJI.values():
-            await message.add_reaction(r)
-        log.info("Added Role Channels Default Msg")
+            for r in EMOJI.values():
+                await message.add_reaction(r)
+            log.info("Added Role Channels Default Msg")
+    except (RuntimeError) as err:
+        log.error(err)
 
 
 async def wrapMsgCheck(message: discord.Message) -> None:
@@ -111,13 +119,16 @@ async def wrapMsgCheck(message: discord.Message) -> None:
     checks if msg is not from a bot, and if msg was already send to website
     if not send it and adds reaction to the msg
     """
-    if message.author.bot:
-        return
-    if checkMsgReact(message.reactions):
-        if rest.makeRequest(msg=message.content):
-            await message.add_reaction('✅')
-        else:
-            await message.add_reaction('❌')
+    try:
+        if message.author.bot:
+            return
+        if checkMsgReact(message.reactions):
+            if rest.makeRequest(msg=message.content):
+                await message.add_reaction('✅')
+            else:
+                await message.add_reaction('❌')
+    except (RuntimeError) as err:
+        log.error(err)
 
 
 def checkMsgReact(reacts: list) -> bool:
