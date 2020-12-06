@@ -14,6 +14,7 @@ TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD_ID')
 WORK_CH_ID = os.getenv('WORK_CH_ID')
 ROLE_CH_ID = os.getenv('ROLE_CH_ID')
+EMOJI: dict = {"Spielleiter": '🖊️', 'Spieler': '📜'}
 ROLE_DICT: dict = {}
 REACT_MSG_ID: int
 
@@ -45,12 +46,12 @@ async def on_message(msg):
 async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
     if payload.message_id != REACT_MSG_ID:
         return
-    print(payload)
-    print(payload.emoji)
-    if(payload.emoji == ":scroll:"):
-        await payload.member.add_roles(ROLE_DICT["Spieler"])
-    if(payload.emoji == ":pen_ballpoint:"):
-        await payload.member.add_roles(ROLE_DICT["Spielleiter"])
+    if payload.member.bot:
+        return
+    for role, emoji in EMOJI.items():
+        if (payload.emoji.name != emoji):
+            continue
+        await payload.member.add_roles(ROLE_DICT[role])
 
 
 async def on_raw_reaction_remove(payload: discord.RawReactionActionEvent):
@@ -73,13 +74,14 @@ async def checkRoleCh(channel: discord.TextChannel) -> None:
     checks or posts message for the role menu channel
     """
     message: discord.Message
-    react: list = [":pen_ballpoint:", ":scroll:"]
+    global REACT_MSG_ID
+    react: list = ["Spielleiter", "Spieler"]
     check_msg: str = f"""Rollen Auswahl
 Reagiere mit diesem Emote um dir selbst die Rolle zu geben
 
-{react[0]}  : Spielleiter
+{EMOJI[react[0]]}  : Spielleiter
 
-{react[1]}  : Rollenspieler"""
+{EMOJI[react[1]]}  : Rollenspieler"""
     check: bool = False
     messages = await channel.history(limit=200).flatten()
     for message in messages:
@@ -88,11 +90,11 @@ Reagiere mit diesem Emote um dir selbst die Rolle zu geben
         if hash(message.content) != hash(check_msg):
             check = True
         else:
-            global REACT_MSG_ID
             REACT_MSG_ID = message.id
     if check or len(messages) == 0:
         message = await channel.send(check_msg)
-        for r in react:
+        REACT_MSG_ID = message.id
+        for r in EMOJI.values():
             await message.add_reaction(r)
         log.info("Added Role Channels Default Msg")
 
