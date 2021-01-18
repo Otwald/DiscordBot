@@ -18,7 +18,9 @@ EMOJI: dict = {"Spielleiter": '🖊️', 'Spieler': '📜'}
 ROLE_DICT: dict = {}
 REACT_MSG_ID: int
 
-bot = commands.Bot(command_prefix="!")
+intents = discord.Intents.default()
+intents.members = True
+bot = commands.Bot(command_prefix="!", intents=intents)
 rest = Rest()
 
 
@@ -35,10 +37,10 @@ async def on_ready():
 
 @bot.event
 async def on_member_join(member: discord.member):
-    if member.guild != GUILD:
+    if member.guild.id != int(GUILD):
         return
-    channel = await member.create_dm()
-    await channel.send(
+    await member.create_dm()
+    await member.dm_channel.send(
         """
 Hallo,
 und herzlich Willkommen auf unserem Discord-Server. Als ersten Schritt besuche bitte den Kanal „Rollen“ – ganz oben auf der linken Seite unter „Eingangsbereich“ – und folge den dortigen Anweisungen um dich entweder als Spielleiter oder Spieler zu registrieren. Danach hast du Zugriff auf die übrigen Funktionen des Servers. Unter anderem kannst du dich jetzt in dem Kanal „Runden-Vorstellung“ für Spielrunden anmelden bzw. als SL auch neue Runden eintragen.
@@ -48,6 +50,7 @@ Bei weiteren Fragen meldest du dich am besten in dem Kanal „Beschwerdebüro“
 Freundliche Grüße
 die Orga"""
     )
+    log.info("join3")
 
 
 @bot.event
