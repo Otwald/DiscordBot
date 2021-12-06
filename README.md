@@ -12,7 +12,7 @@
 
 ## General info
 
-A small little Discord Bot to build a Bridghe between my Jenco Project and the Community Discord for this. Is mostly made for my own personal use.
+A small little Discord Bot to build a Bridge between my Jenco Project and the Community Discord. Is mostly made for my own personal use.
 
 ## Technologies
 
@@ -34,17 +34,17 @@ python3 main.py
 
 List of features ready and TODOs for future development
 
-- Check Certain Discoerd Channel for a Payload and make a Request to Website Api
+- Check Certain Discord Channel for a Payload and make a Request to Website Api
+- Welcome Message
 
 To-do list:
 
 - Rollcenter
-- Welcome Message
 - HelpCommands
 
 ## Status
 
-Project is: _in progress_
+Project is: _done_
 
 ## Contact
 
